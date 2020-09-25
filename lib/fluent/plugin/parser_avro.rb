@@ -34,10 +34,10 @@ module Fluent
 
         if (!@writers_schema_file.nil? || !@writers_schema_json.nil?) &&
            (!@readers_schema_file.nil? || !@readers_schema_json.nil?)
-          if !((@writers_schema_json.nil? ? 0 : 1) + (@writers_schema_file.nil? ? 0 : 1) == 1)
+          if @writers_schema_json.nil? ^ @writers_schema_file.nil?
             raise Fluent::ConfigError, "writers_schema_json, writers_schema_file is required, but they cannot specify at the same time!"
           end
-          if !((@readers_schema_json.nil? ? 0 : 1) + (@readers_schema_file.nil? ? 0 : 1) == 1)
+          if @readers_schema_json.nil? ^ @readers_schema_file.nil?
             raise Fluent::ConfigError, "readers_schema_json, readers_schema_file is required, but they cannot specify at the same time!"
           end
 
