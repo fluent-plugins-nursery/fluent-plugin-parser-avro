@@ -1,0 +1,7 @@
+{ "namespace": "org.fluentd.parser.avro",
+      "type": "record",
+      "name": "User",
+      "fields" : [
+        {"name": "username", "type": "string"},
+        {"name": "age", "type": "int"}
+]}
