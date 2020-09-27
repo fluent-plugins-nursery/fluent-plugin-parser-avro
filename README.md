@@ -1,4 +1,4 @@
-# fluent-plugin-avro
+# fluent-plugin-parser-avro
 
 [Fluentd](https://fluentd.org/) parser plugin to parse avro formatted data.
 
