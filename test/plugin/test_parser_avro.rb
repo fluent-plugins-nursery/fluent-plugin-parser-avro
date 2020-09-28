@@ -289,6 +289,37 @@ class AvroParserTest < Test::Unit::TestCase
       }
     EOC
 
+    def test_dummy_server
+      conf = {
+        'schema_url' => "http://localhost:8081/subjects/persons-avro-value/versions/1",
+        'schema_url_key' => 'schema'
+      }
+      d = create_driver(conf)
+      d.instance.schema_url =~ /^http:\/\/([.:a-z0-9]+)\//
+      server = $1
+      host = server.split(':')[0]
+      port = server.split(':')[1].to_i
+      client = Net::HTTP.start(host, port)
+
+      assert_equal '200', client.request_get('/').code
+
+      assert_equal '200', client.request_get('/subjects/persons-avro-value/versions/1').code
+      # The first GET request is in #configure.
+      assert_equal 2, @got.size
+      assert_equal 'persons-avro-value', @got[1][:registered_name]
+      assert_equal '1', @got[1][:version]
+
+      assert_equal '200', client.request_get('/subjects/persons-avro-value/versions/').code
+      assert_equal 3, @got.size
+      assert_equal 'persons-avro-value', @got[2][:registered_name]
+      assert_equal '', @got[2][:version]
+
+      assert_equal '200', client.request_get('/subjects/persons-avro-value/versions/3').code
+      assert_equal 4, @got.size
+      assert_equal 'persons-avro-value', @got[3][:registered_name]
+      assert_equal '3', @got[3][:version]
+    end
+
     def test_schema_url
       conf = {
         'schema_url' => "http://localhost:8081/subjects/persons-avro-value/versions/1",
