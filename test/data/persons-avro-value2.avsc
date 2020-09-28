@@ -1,0 +1,1 @@
+{"subject":"persons-avro-value","version":2,"id":21,"schema":"{\"type\":\"record\",\"name\":\"Person\",\"namespace\":\"com.ippontech.kafkatutorials\",\"fields\":[{\"name\":\"firstName\",\"type\":\"string\"},{\"name\":\"lastName\",\"type\":\"string\"},{\"name\":\"birthDate\",\"type\":\"long\"},{\"name\":\"verified\",\"type\":\"boolean\",\"default\":false}]}"}

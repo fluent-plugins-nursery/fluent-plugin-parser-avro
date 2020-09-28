@@ -14,7 +14,9 @@
 # limitations under the License.
 
 require "avro"
+require "net/http"
 require "stringio"
+require "uri"
 require "fluent/plugin/parser"
 
 module Fluent
@@ -24,6 +26,9 @@ module Fluent
 
       config_param :schema_file, :string, :default => nil
       config_param :schema_json, :string, :default => nil
+      config_param :schema_url, :string, :default => nil
+      config_param :schema_registery_with_subject_url, :string, :default => nil
+      config_param :schema_url_key, :string, :default => nil
       config_param :writers_schema_file, :string, :default => nil
       config_param :writers_schema_json, :string, :default => nil
       config_param :readers_schema_file, :string, :default => nil
@@ -56,15 +61,22 @@ module Fluent
           @readers_schema = Avro::Schema.parse(@readers_raw_schema)
           @reader = Avro::IO::DatumReader.new(@writers_schema, @readers_schema)
         else
-          if !((@schema_json.nil? ? 0 : 1) + (@schema_file.nil? ? 0 : 1) == 1)
-            raise Fluent::ConfigError, "schema_json, schema_file is required, but they cannot specify at the same time!"
+          unless [@schema_json, @schema_file, @schema_url, @schema_registery_with_subject_url].compact.size == 1
+            raise Fluent::ConfigError, "schema_json, schema_file, or schema_url is required, but they cannot specify at the same time!"
+          end
+          if @schema_registery_with_subject_url && !@schema_registery_with_subject_url.end_with?("/")
+            raise Fluent::ConfigError, "schema_registery_with_subject_url must contain the trailing slash('/')."
           end
 
           @raw_schema = if @schema_file
-                        File.read(@schema_file)
-                      elsif @schema_json
-                        @schema_json
-                      end
+                          File.read(@schema_file)
+                        elsif @schema_registery_with_subject_url
+                          fetch_latest_schema(@schema_registery_with_subject_url, @schema_url_key)
+                        elsif @schema_url
+                          fetch_schema(@schema_url, @schema_url_key)
+                        elsif @schema_json
+                          @schema_json
+                        end
 
           @schema = Avro::Schema.parse(@raw_schema)
           @reader = Avro::IO::DatumReader.new(@schema)
@@ -83,7 +95,55 @@ module Fluent
           time, record = convert_values(parse_time(decoded_data), decoded_data)
           yield time, record
         rescue => e
-          raise e
+          raise e if @schema_url.nil? or @schema_registery_with_subject_url.nil?
+          begin
+            new_raw_schema = if @schema_url
+                               fetch_schema(@schema_url, @schema_url_key)
+                             elsif @schema_registery_with_subject_url
+                               fetch_latest_schema(@schema_registery_with_subject_url, @schema_url_key)
+                             end
+            new_schema = Avro::Schema.parse(new_raw_schema)
+            is_changed = (new_raw_schena_== @raw_schema)
+            @raw_schema = new_raw_schema
+            @schame = new_schema
+          rescue
+            # Do nothing.
+          end
+          if is_changed
+            decoded_data = @reader.read(decoder)
+            time, record = convert_values(parse_time(decoded_data), decoded_data)
+            yield time, record
+          else
+            raise e
+          end
+        end
+      end
+
+      def fetch_schema_versions(base_uri_with_versions)
+        versions_response = Net::HTTP.get_response(base_uri_with_versions)
+        Yajl.load(versions_response.body)
+      end
+
+      def fetch_latest_schema(base_url, schema_key)
+        base_uri = URI.parse(base_url)
+        base_uri_with_versions = URI.join(base_uri, "versions/")
+        versions = fetch_schema_versions(base_uri_with_versions)
+        uri = URI.join(base_uri_with_versions, versions.last.to_s)
+        response = Net::HTTP.get_response(uri)
+        if schema_key.nil?
+          response.body
+        else
+          Yajl.load(response.body)[schema_key]
+        end
+      end
+
+      def fetch_schema(url, schema_key)
+        uri = URI.parse(url)
+        response = Net::HTTP.get_response(uri)
+        if schema_key.nil?
+          response.body
+        else
+          Yajl.load(response.body)[schema_key]
         end
       end
     end
