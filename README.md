@@ -1,5 +1,8 @@
 # fluent-plugin-parser-avro
 
+![Testing on Ubuntu](https://github.com/fluent-plugins-nursery/fluent-plugin-parser-avro/workflows/Testing%20on%20Ubuntu/badge.svg?branch=master)
+![Testing on Windows](https://github.com/fluent-plugins-nursery/fluent-plugin-parser-avro/workflows/Testing%20on%20Windows/badge.svg?branch=master)
+
 [Fluentd](https://fluentd.org/) parser plugin to parse avro formatted data.
 
 ## Installation
