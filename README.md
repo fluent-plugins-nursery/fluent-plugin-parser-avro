@@ -38,6 +38,8 @@ $ bundle
 * **writers_schema_json** (string) (optional): avro schema definition hash for writers definition.
 * **readers_schema_file** (string) (optional): avro schema file path for readers definition.
 * **readers_schema_json** (string) (optional): avro schema definition hash for readers definition.
+* **use_confluent_schema** (bool) (optional): Assume to use confluent schema. Confluent avro schema uses the first 5-bytes for magic byte (1 byte) and schema_id (4 bytes). This parameter specifies to skip reading the first 5-bytes or not.
+  * Default value: `true`.
 
 ### Configuration Example
 
@@ -49,6 +51,8 @@ $ bundle
   # schema_url http(s)://[server fqdn]:[port]/subjects/[a great user's subject]/[the latest schema version]
   # schema_key schema
   # schema_registery_with_subject_url http(s)://[server fqdn]:[port]/subjects/[a great user's subject]/
+  # When using with confluent registry, this parameter must be true.
+  # use_confluent_schema true
 </parse>
 ```
 
@@ -74,6 +78,16 @@ For example, when specifying the following configuration:
 ```
 
 Then the parser plugin calls `GET http://localhost:8081/subjects/persons-avro-value/versions/` to retrive the registered schema versions and then calls `GET GET http://localhost:8081/subjects/persons-avro-value/versions/<the latest schema version>`.
+
+If you use this plugin with confluent registry, please specify `use_confluent_schema` as `true`.
+
+This is because, confluent avro schema uses the following structure:
+
+MAGIC_BYTE | schema_id | record
+----------:|:---------:|:---------------
+ 1byte     |  4bytes   | record contents
+
+When specifying `use_confluent_schema` as `true`, this plugin will skip to read the first 5-bytes.
 
 ## Copyright
 
