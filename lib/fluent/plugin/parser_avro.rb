@@ -103,7 +103,7 @@ module Fluent
                                fetch_latest_schema(@schema_registery_with_subject_url, @schema_url_key)
                              end
             new_schema = Avro::Schema.parse(new_raw_schema)
-            is_changed = (new_raw_schena_== @raw_schema)
+            is_changed = (new_raw_schena == @raw_schema)
             @raw_schema = new_raw_schema
             @schame = new_schema
           rescue
