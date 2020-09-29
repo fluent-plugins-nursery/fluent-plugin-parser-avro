@@ -76,74 +76,94 @@ class AvroParserTest < Test::Unit::TestCase
     }
   EOC
 
-  def test_parse
+  data("use_confluent_schema" => true,
+       "plain"                => false)
+  def test_parse(data)
+    config = data
     conf = {
-      'schema_json' => SCHEMA
+      'schema_json' => SCHEMA,
+      'use_confluent_schema' => config,
     }
     d = create_driver(conf)
     datum = {"username" => "foo", "age" => 42, "verified" => true}
-    encoded = encode_datum(datum, SCHEMA)
+    encoded = encode_datum(datum, SCHEMA, config)
     d.instance.parse(encoded) do |_time, record|
       assert_equal datum, record
     end
 
     datum = {"username" => "baz", "age" => 34}
-    encoded = encode_datum(datum, SCHEMA)
+    encoded = encode_datum(datum, SCHEMA, config)
     d.instance.parse(encoded) do |_time, record|
       assert_equal datum.merge("verified" => nil), record
     end
   end
 
-  def test_parse_with_avro_schema
+  data("use_confluent_schema" => true,
+       "plain"                => false)
+  def test_parse_with_avro_schema(data)
+    config = data
     conf = {
-      'schema_file' => File.join(__dir__, "..", "data", "user.avsc")
+      'schema_file' => File.join(__dir__, "..", "data", "user.avsc"),
+      'use_confluent_schema' => config,
     }
     d = create_driver(conf)
     datum = {"username" => "foo", "age" => 42, "verified" => true}
-    encoded = encode_datum(datum, SCHEMA)
+    encoded = encode_datum(datum, SCHEMA, config)
     d.instance.parse(encoded) do |_time, record|
       assert_equal datum, record
     end
 
     datum = {"username" => "baz", "age" => 34}
-    encoded = encode_datum(datum, SCHEMA)
+    encoded = encode_datum(datum, SCHEMA, config)
     d.instance.parse(encoded) do |_time, record|
       assert_equal datum.merge("verified" => nil), record
     end
   end
 
-  def test_parse_with_readers_and_writers_schema
+  data("use_confluent_schema" => true,
+       "plain"                => false)
+  def test_parse_with_readers_and_writers_schema(data)
+    config = data
     conf = {
       'writers_schema_json' => SCHEMA,
       'readers_schema_json' => READERS_SCHEMA,
+      'use_confluent_schema' => config,
     }
     d = create_driver(conf)
     datum = {"username" => "foo", "age" => 42, "verified" => true}
-    encoded = encode_datum(datum, SCHEMA)
+    encoded = encode_datum(datum, SCHEMA, config)
     d.instance.parse(encoded) do |_time, record|
       datum.delete("verified")
       assert_equal datum, record
     end
   end
 
-  def test_parse_with_readers_and_writers_schema_files
+  data("use_confluent_schema" => true,
+       "plain"                => false)
+  def test_parse_with_readers_and_writers_schema_files(data)
+    config = data
     conf = {
       'writers_schema_file' => File.join(__dir__, "..", "data", "writer_user.avsc"),
       'readers_schema_file' => File.join(__dir__, "..", "data", "reader_user.avsc"),
+      'use_confluent_schema' => config,
     }
     d = create_driver(conf)
     datum = {"username" => "foo", "age" => 42, "verified" => true}
-    encoded = encode_datum(datum, SCHEMA)
+    encoded = encode_datum(datum, SCHEMA, config)
     d.instance.parse(encoded) do |_time, record|
       datum.delete("verified")
       assert_equal datum, record
     end
   end
 
-  def test_parse_with_complex_schema
+  data("use_confluent_schema" => true,
+       "plain"                => false)
+  def test_parse_with_complex_schema(data)
+    config = data
     conf = {
       'schema_json' => COMPLEX_SCHEMA,
-      'time_key' => 'time'
+      'time_key' => 'time',
+      'use_confluent_schema' => config,
     }
     d = create_driver(conf)
     time_str = "2020-09-25 15:08:09.082113 +0900"
@@ -162,7 +182,7 @@ class AvroParserTest < Test::Unit::TestCase
       }
     }
 
-    encoded = encode_datum(datum, COMPLEX_SCHEMA)
+    encoded = encode_datum(datum, COMPLEX_SCHEMA, config)
     d.instance.parse(encoded) do |time, record|
       assert_equal Time.parse(time_str).to_r, time.to_r
       datum.delete("time")
@@ -320,46 +340,58 @@ class AvroParserTest < Test::Unit::TestCase
       assert_equal '3', @got[3][:version]
     end
 
-    def test_schema_url
+    data("use_confluent_schema" => true,
+         "plain"                => false)
+    def test_schema_url(data)
+      config = data
       conf = {
         'schema_url' => "http://localhost:8081/subjects/persons-avro-value/versions/1",
-        'schema_url_key' => 'schema'
+        'schema_url_key' => 'schema',
+        'use_confluent_schema' => config,
       }
       d = create_driver(conf)
       datum = {"firstName" => "Aleen","lastName" => "Terry","birthDate" => 159202477258}
-      encoded = encode_datum(datum, REMOTE_SCHEMA)
+      encoded = encode_datum(datum, REMOTE_SCHEMA, config)
       d.instance.parse(encoded) do |_time, record|
         assert_equal datum, record
       end
     end
 
-    def test_schema_url_with_version2
+    data("use_confluent_schema" => true,
+         "plain"                => false)
+    def test_schema_url_with_version2(data)
+      config = data
       conf = {
         'schema_url' => "http://localhost:8081/subjects/persons-avro-value/versions/2",
-        'schema_url_key' => 'schema'
+        'schema_url_key' => 'schema',
+        'use_confluent_schema' => config,
       }
       d = create_driver(conf)
       datum = {"firstName" => "Aleen","lastName" => "Terry","birthDate" => 159202477258}
-      encoded = encode_datum(datum, REMOTE_SCHEMA2)
+      encoded = encode_datum(datum, REMOTE_SCHEMA2, config)
       d.instance.parse(encoded) do |_time, record|
         assert_equal datum.merge("verified" => false), record
       end
     end
 
-    def test_schema_registery_with_subject_url
+    data("use_confluent_schema" => true,
+         "plain"                => false)
+    def test_schema_registery_with_subject_url(data)
+      config = data
       conf = {
         'schema_registery_with_subject_url' => "http://localhost:8081/subjects/persons-avro-value/",
-        'schema_url_key' => 'schema'
+        'schema_url_key' => 'schema',
+        'use_confluent_schema' => config,
       }
       d = create_driver(conf)
       datum = {"firstName" => "Aleen","lastName" => "Terry","birthDate" => 159202477258}
-      encoded = encode_datum(datum, REMOTE_SCHEMA2)
+      encoded = encode_datum(datum, REMOTE_SCHEMA2, config)
       d.instance.parse(encoded) do |_time, record|
         assert_equal datum.merge("verified" => nil), record
       end
     end
 
-    def test_schema_registery_with_invalid_subject_url
+    def test_schema_registery_with_invalid_subject_url(data)
       conf = {
         'schema_registery_with_subject_url' => "http://localhost:8081/subjects/persons-avro-value",
         'schema_url_key' => 'schema'
@@ -372,9 +404,13 @@ class AvroParserTest < Test::Unit::TestCase
 
   private
 
-  def encode_datum(datum, string_schema)
+  def encode_datum(datum, string_schema, use_confluent_schema = true, schema_id = 1)
     buffer = StringIO.new
     encoder = Avro::IO::BinaryEncoder.new(buffer)
+    if use_confluent_schema
+      encoder.write(Fluent::Plugin::AvroParser::MAGIC_BYTE)
+      encoder.write([schema_id].pack("N"))
+    end
     schema = Avro::Schema.parse(string_schema)
     writer = Avro::IO::DatumWriter.new(schema)
     writer.write(datum, encoder)

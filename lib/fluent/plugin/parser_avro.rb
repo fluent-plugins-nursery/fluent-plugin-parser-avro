@@ -24,6 +24,8 @@ module Fluent
     class AvroParser < Fluent::Plugin::Parser
       Fluent::Plugin.register_parser("avro", self)
 
+      MAGIC_BYTE = [0].pack("C").freeze
+
       config_param :schema_file, :string, :default => nil
       config_param :schema_json, :string, :default => nil
       config_param :schema_url, :string, :default => nil
@@ -33,6 +35,7 @@ module Fluent
       config_param :writers_schema_json, :string, :default => nil
       config_param :readers_schema_file, :string, :default => nil
       config_param :readers_schema_json, :string, :default => nil
+      config_param :use_confluent_schema, :bool, :default => true
 
       def configure(conf)
         super
@@ -91,6 +94,19 @@ module Fluent
         buffer = StringIO.new(data)
         decoder = Avro::IO::BinaryDecoder.new(buffer)
         begin
+          if @use_confluent_schema
+            # When using confluent avro schema, record is formatted as follows:
+            #
+            # MAGIC_BYTE | schema_id | record
+            # ----------:|:---------:|:---------------
+            #  1byte     |  4bytes   | record contents
+            magic_byte = decoder.read(1)
+
+            if magic_byte != MAGIC_BYTE
+              raise "The first byte should be magic byte but got {magic_byte.inspect}"
+            end
+            _schema_id = decoder.read(4).unpack("N").first
+          end
           decoded_data = @reader.read(decoder)
           time, record = convert_values(parse_time(decoded_data), decoded_data)
           yield time, record
