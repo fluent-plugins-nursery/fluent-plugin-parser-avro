@@ -1,0 +1,1 @@
+{"schema":"{\"type\":\"record\",\"name\":\"Person\",\"namespace\":\"com.ippontech.kafkatutorials\",\"fields\":[{\"name\":\"firstName\",\"type\":\"string\"},{\"name\":\"lastName\",\"type\":\"string\"},{\"name\":\"birthDate\",\"type\":\"long\"},{\"name\":\"verified\",\"type\":[\"boolean\",\"null\"],\"default\":false}]}"}
