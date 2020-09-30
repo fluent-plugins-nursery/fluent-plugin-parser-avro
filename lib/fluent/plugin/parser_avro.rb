@@ -145,6 +145,19 @@ module Fluent
           if is_changed
             buffer = StringIO.new(data)
             decoder = Avro::IO::BinaryDecoder.new(buffer)
+            if @use_confluent_schema || @avro_registry
+              # When using confluent avro schema, record is formatted as follows:
+              #
+              # MAGIC_BYTE | schema_id | record
+              # ----------:|:---------:|:---------------
+              #  1byte     |  4bytes   | record contents
+              magic_byte = decoder.read(1)
+
+              if magic_byte != MAGIC_BYTE
+                raise "The first byte should be magic byte but got {magic_byte.inspect}"
+              end
+              schema_id = decoder.read(4).unpack("N").first
+            end
             @reader = Avro::IO::DatumReader.new(@schema)
             decoded_data = @reader.read(decoder)
             time, record = convert_values(parse_time(decoded_data), decoded_data)

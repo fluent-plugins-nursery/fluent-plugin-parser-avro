@@ -205,6 +205,22 @@ class AvroParserTest < Test::Unit::TestCase
           res.status = 200
           res.body = 'running'
         end
+        server.mount_proc("/schemas/ids") do |req, res|
+          req.path =~ /^\/schemas\/ids\/([^\/]*)$/
+          version = $1
+          @got.push({
+            version: version,
+          })
+          if version == "1"
+            res.body = File.read(File.join(__dir__, "..", "data", "schema-persions-value-1.avsc"))
+          elsif version == "21"
+            res.body = File.read(File.join(__dir__, "..", "data", "schema-persions-value-21.avsc"))
+          elsif version == "41"
+            res.body = File.read(File.join(__dir__, "..", "data", "schema-persions-value-41.avsc"))
+          elsif version == "42"
+            res.body = File.read(File.join(__dir__, "..", "data", "schema-persions-value-42.avsc"))
+          end
+        end
         server.mount_proc("/subjects") do |req, res|
           req.path =~ /^\/subjects\/([^\/]*)\/([^\/]*)\/(.*)$/
           avro_registered_name = $1
@@ -223,6 +239,8 @@ class AvroParserTest < Test::Unit::TestCase
           elsif version == "3"
             res.body = File.read(File.join(__dir__, "..", "data", "persons-avro-value3.avsc"))
           elsif version == "4"
+            res.body = File.read(File.join(__dir__, "..", "data", "persons-avro-value4.avsc"))
+          elsif version == "latest"
             res.body = File.read(File.join(__dir__, "..", "data", "persons-avro-value4.avsc"))
           end
         end
@@ -338,6 +356,26 @@ class AvroParserTest < Test::Unit::TestCase
       assert_equal 4, @got.size
       assert_equal 'persons-avro-value', @got[3][:registered_name]
       assert_equal '3', @got[3][:version]
+
+      assert_equal '200', client.request_get('/schemas/ids/1').code
+      assert_equal 5, @got.size
+      assert_nil @got[4][:registered_name]
+      assert_equal '1', @got[4][:version]
+
+      assert_equal '200', client.request_get('/schemas/ids/21').code
+      assert_equal 6, @got.size
+      assert_nil @got[5][:registered_name]
+      assert_equal '21', @got[5][:version]
+
+      assert_equal '200', client.request_get('/schemas/ids/41').code
+      assert_equal 7, @got.size
+      assert_nil @got[6][:registered_name]
+      assert_equal '41', @got[6][:version]
+
+      assert_equal '200', client.request_get('/schemas/ids/42').code
+      assert_equal 8, @got.size
+      assert_nil @got[7][:registered_name]
+      assert_equal '42', @got[7][:version]
     end
 
     data("use_confluent_schema" => true,
@@ -388,6 +426,43 @@ class AvroParserTest < Test::Unit::TestCase
       encoded = encode_datum(datum, REMOTE_SCHEMA2, config)
       d.instance.parse(encoded) do |_time, record|
         assert_equal datum.merge("verified" => nil), record
+      end
+    end
+
+    def test_confluent_registry_with_schema_version
+      conf = Fluent::Config::Element.new(
+        '', '', {'@type' => 'avro'}, [
+          Fluent::Config::Element.new('confluent_registry', '', {
+                                        'url' => 'http://localhost:8081',
+                                        'subject' => 'persons-avro-value',
+                                        'schema_key' => 'schema',
+                                        'schema_version' => '1',
+                                      }, [])
+        ])
+      d = create_driver(conf)
+      datum = {"firstName" => "Aleen","lastName" => "Terry","birthDate" => 159202477258}
+      schema = Yajl.load(File.read(File.join(__dir__, "..", "data", "schema-persions-value-1.avsc")))
+      encoded = encode_datum(datum, schema.fetch("schema"), true, 1)
+      d.instance.parse(encoded) do |_time, record|
+        assert_equal datum, record
+      end
+    end
+
+    def test_confluent_registry_with_fallback
+      conf = Fluent::Config::Element.new(
+        '', '', {'@type' => 'avro'}, [
+          Fluent::Config::Element.new('confluent_registry', '', {
+                                        'url' => 'http://localhost:8081',
+                                        'subject' => 'persons-avro-value',
+                                        'schema_key' => 'schema',
+                                      }, [])
+        ])
+      d = create_driver(conf)
+      datum = {"firstName" => "Aleen","lastName" => "Terry","birthDate" => 159202477258}
+      schema = Yajl.load(File.read(File.join(__dir__, "..", "data", "schema-persions-value-1.avsc")))
+      encoded = encode_datum(datum, schema.fetch("schema"), true, 1)
+      d.instance.parse(encoded) do |_time, record|
+        assert_equal datum, record
       end
     end
 
