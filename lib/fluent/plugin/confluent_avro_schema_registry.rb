@@ -25,7 +25,7 @@ module Fluent
 
       def subject_version(subject, schema_key, version = "latest")
         registry_uri = URI.parse(@registry_url)
-        registry_uri_with_versions = URI.join(registry_uri, "subjects/#{subject}/versions/#{version}")
+        registry_uri_with_versions = URI.join(registry_uri, "/subjects/#{subject}/versions/#{version}")
         response = Net::HTTP.get_response(registry_uri_with_versions)
         if schema_key.nil?
           response.body
@@ -36,7 +36,7 @@ module Fluent
 
       def schema_with_id(schema_id, schema_key)
         registry_uri = URI.parse(@registry_url)
-        registry_uri_with_ids = URI.join(registry_uri, "schemas/ids/#{schema_id}")
+        registry_uri_with_ids = URI.join(registry_uri, "/schemas/ids/#{schema_id}")
         response = Net::HTTP.get_response(registry_uri_with_ids)
         if schema_key.nil?
           response.body
