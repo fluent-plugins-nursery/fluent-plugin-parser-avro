@@ -76,6 +76,7 @@ Confluent AVRO schema registry should respond with REST API.
 This plugin uses the following API:
 
 * [`GET /subjects/(string: subject)/versions/(versionId: version)`](https://docs.confluent.io/current/schema-registry/develop/api.html#get--subjects-(string-%20subject)-versions)
+* [`GET /schemas/ids/(int: id)`](https://docs.confluent.io/current/schema-registry/develop/api.html#get--schemas-ids-int-%20id)
 
 Users can specify a URL for retrieving the latest schemna information with `<confluent_registry>`:
 
