@@ -143,6 +143,9 @@ module Fluent
             # Do nothing.
           end
           if is_changed
+            buffer = StringIO.new(data)
+            decoder = Avro::IO::BinaryDecoder.new(buffer)
+            @reader = Avro::IO::DatumReader.new(@schema)
             decoded_data = @reader.read(decoder)
             time, record = convert_values(parse_time(decoded_data), decoded_data)
             yield time, record
