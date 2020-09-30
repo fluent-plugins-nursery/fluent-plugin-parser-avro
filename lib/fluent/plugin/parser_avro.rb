@@ -18,6 +18,7 @@ require "net/http"
 require "stringio"
 require "uri"
 require "fluent/plugin/parser"
+require_relative "./confluent_avro_schema_registry"
 
 module Fluent
   module Plugin
@@ -36,6 +37,12 @@ module Fluent
       config_param :readers_schema_file, :string, :default => nil
       config_param :readers_schema_json, :string, :default => nil
       config_param :use_confluent_schema, :bool, :default => true
+      config_section :confluent_registry, param_name: :avro_registry, required: false, multi: false do
+        config_param :url, :string
+        config_param :subject, :string
+        config_param :schema_key, :string, :default => "schema"
+        config_param :schema_version, :string, :default => "latest"
+      end
 
       def configure(conf)
         super
@@ -63,6 +70,13 @@ module Fluent
           @writers_schema = Avro::Schema.parse(@writers_raw_schema)
           @readers_schema = Avro::Schema.parse(@readers_raw_schema)
           @reader = Avro::IO::DatumReader.new(@writers_schema, @readers_schema)
+        elsif @avro_registry
+          @confluent_registry = Fluent::Plugin::ConfluentAvroSchemaRegistry.new(@avro_registry.url)
+          @raw_schema = @confluent_registry.subject_version(@avro_registry.subject,
+                                                            @avro_registry.schema_key,
+                                                            @avro_registry.schema_version)
+          @schema = Avro::Schema.parse(@raw_schema)
+          @reader = Avro::IO::DatumReader.new(@schema)
         else
           unless [@schema_json, @schema_file, @schema_url, @schema_registery_with_subject_url].compact.size == 1
             raise Fluent::ConfigError, "schema_json, schema_file, or schema_url is required, but they cannot specify at the same time!"
@@ -94,7 +108,7 @@ module Fluent
         buffer = StringIO.new(data)
         decoder = Avro::IO::BinaryDecoder.new(buffer)
         begin
-          if @use_confluent_schema
+          if @use_confluent_schema || @avro_registry
             # When using confluent avro schema, record is formatted as follows:
             #
             # MAGIC_BYTE | schema_id | record
@@ -105,24 +119,27 @@ module Fluent
             if magic_byte != MAGIC_BYTE
               raise "The first byte should be magic byte but got {magic_byte.inspect}"
             end
-            _schema_id = decoder.read(4).unpack("N").first
+            schema_id = decoder.read(4).unpack("N").first
           end
           decoded_data = @reader.read(decoder)
           time, record = convert_values(parse_time(decoded_data), decoded_data)
           yield time, record
-        rescue => e
-          raise e if @schema_url.nil? or @schema_registery_with_subject_url.nil?
+        rescue EOFError, RuntimeError => e
+          raise e unless [@schema_url, @schema_registery_with_subject_url, @avro_registry].compact.size == 1
           begin
             new_raw_schema = if @schema_url
                                fetch_schema(@schema_url, @schema_url_key)
+                             elsif @avro_registry
+                               @confluent_registry.schema_with_id(schema_id,
+                                                                  @avro_registry.schema_key)
                              elsif @schema_registery_with_subject_url
                                fetch_latest_schema(@schema_registery_with_subject_url, @schema_url_key)
                              end
             new_schema = Avro::Schema.parse(new_raw_schema)
-            is_changed = (new_raw_schena == @raw_schema)
+            is_changed = (new_raw_schema != @raw_schema)
             @raw_schema = new_raw_schema
-            @schame = new_schema
-          rescue
+            @schema = new_schema
+          rescue EOFError, RuntimeError
             # Do nothing.
           end
           if is_changed
