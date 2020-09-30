@@ -412,23 +412,6 @@ class AvroParserTest < Test::Unit::TestCase
       end
     end
 
-    data("use_confluent_schema" => true,
-         "plain"                => false)
-    def test_schema_registery_with_subject_url(data)
-      config = data
-      conf = {
-        'schema_registery_with_subject_url' => "http://localhost:8081/subjects/persons-avro-value/",
-        'schema_url_key' => 'schema',
-        'use_confluent_schema' => config,
-      }
-      d = create_driver(conf)
-      datum = {"firstName" => "Aleen","lastName" => "Terry","birthDate" => 159202477258}
-      encoded = encode_datum(datum, REMOTE_SCHEMA2, config)
-      d.instance.parse(encoded) do |_time, record|
-        assert_equal datum.merge("verified" => nil), record
-      end
-    end
-
     def test_confluent_registry_with_schema_version
       conf = Fluent::Config::Element.new(
         '', '', {'@type' => 'avro'}, [
@@ -463,16 +446,6 @@ class AvroParserTest < Test::Unit::TestCase
       encoded = encode_datum(datum, schema.fetch("schema"), true, 1)
       d.instance.parse(encoded) do |_time, record|
         assert_equal datum, record
-      end
-    end
-
-    def test_schema_registery_with_invalid_subject_url(data)
-      conf = {
-        'schema_registery_with_subject_url' => "http://localhost:8081/subjects/persons-avro-value",
-        'schema_url_key' => 'schema'
-      }
-      assert_raise(Fluent::ConfigError) do
-        create_driver(conf)
       end
     end
   end
