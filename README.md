@@ -39,6 +39,8 @@ $ bundle
 * **readers_schema_json** (string) (optional): avro schema definition hash for readers definition.
 * **use_confluent_schema** (bool) (optional): Assume to use confluent schema. Confluent avro schema uses the first 5-bytes for magic byte (1 byte) and schema_id (4 bytes). This parameter specifies to skip reading the first 5-bytes or not.
   * Default value: `true`.
+* **api_key** (string) (optional): Set key for Basic authentication.
+* **api_secret** (string) (optional): Set secret for Basic authentication.
 
 ### \<confluent_registry\> section (optional) (single)
 

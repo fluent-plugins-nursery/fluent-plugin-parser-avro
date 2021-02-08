@@ -36,6 +36,8 @@ module Fluent
       config_param :readers_schema_file, :string, :default => nil
       config_param :readers_schema_json, :string, :default => nil
       config_param :use_confluent_schema, :bool, :default => true
+      config_param :api_key, :string, :default => nil
+      config_param :api_secret, :string, :default => nil
       config_section :confluent_registry, param_name: :avro_registry, required: false, multi: false do
         config_param :url, :string
         config_param :subject, :string
@@ -70,7 +72,7 @@ module Fluent
           @readers_schema = Avro::Schema.parse(@readers_raw_schema)
           @reader = Avro::IO::DatumReader.new(@writers_schema, @readers_schema)
         elsif @avro_registry
-          @confluent_registry = Fluent::Plugin::ConfluentAvroSchemaRegistry.new(@avro_registry.url)
+          @confluent_registry = Fluent::Plugin::ConfluentAvroSchemaRegistry.new(@avro_registry.url, @api_key, @api_secret)
           @raw_schema = @confluent_registry.subject_version(@avro_registry.subject,
                                                             @avro_registry.schema_key,
                                                             @avro_registry.schema_version)
@@ -162,7 +164,15 @@ module Fluent
 
       def fetch_schema(url, schema_key)
         uri = URI.parse(url)
-        response = Net::HTTP.get_response(uri)
+        response = if @api_key and @api_secret
+                     Net::HTTP.start(uri.host, uri.port) do |http|
+                       request = Net::HTTP::Get.new(uri.path)
+                       request.basic_auth(@api_key, @api_secret)
+                       http.request(request)
+                     end
+                   else
+                     Net::HTTP.get_response(uri)
+                   end
         if schema_key.nil?
           response.body
         else
