@@ -164,15 +164,13 @@ module Fluent
 
       def fetch_schema(url, schema_key)
         uri = URI.parse(url)
-        response = if @api_key and @api_secret
-                     Net::HTTP.start(uri.host, uri.port) do |http|
-                       request = Net::HTTP::Get.new(uri.path)
-                       request.basic_auth(@api_key, @api_secret)
-                       http.request(request)
-                     end
-                   else
-                     Net::HTTP.get_response(uri)
-                   end
+        response = Net::HTTP.start(uri.host, uri.port, :use_ssl => (uri.scheme == "https")) do |http|
+          request = Net::HTTP::Get.new(uri.path)
+          if @api_key and @api_secret
+            request.basic_auth(@api_key, @api_secret)
+          end
+          http.request(request)
+        end
         if schema_key.nil?
           response.body
         else
