@@ -51,7 +51,7 @@ module Fluent
 
       def get_response(uri)
         response = if @api_key and @api_secret
-                     Net::HTTP.start(uri.host, uri.port) do |http|
+                     Net::HTTP.start(uri.host, uri.port, :use_ssl => (uri.scheme == "https")) do |http|
                        request = Net::HTTP::Get.new(uri.path)
                        request.basic_auth(@api_key, @api_secret)
                        http.request(request)
