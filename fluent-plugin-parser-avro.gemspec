@@ -3,7 +3,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name    = "fluent-plugin-parser-avro"
-  spec.version = "0.3.0"
+  spec.version = "0.3.1"
   spec.authors = ["Hiroshi Hatake", "Kentaro Hayashi"]
   spec.email   = ["cosmo0920.wp@gmail.com", "kenhys@gmail.com"]
 
