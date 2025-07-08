@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = %q{Avro parser plugin for Fluentd}
   spec.description   = spec.summary
-  spec.homepage      = "https://github.com/fluent-plugins-nerysery/fluent-plugin-parser-avro"
+  spec.homepage      = "https://github.com/fluent-plugins-nursery/fluent-plugin-parser-avro"
   spec.license       = "Apache-2.0"
 
   test_files, files  = `git ls-files -z`.split("\x0").partition do |f|
