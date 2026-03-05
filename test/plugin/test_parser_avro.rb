@@ -474,6 +474,7 @@ class AvroParserTest < Test::Unit::TestCase
           server.shutdown
         end
       end
+      sleep 0.5 # Wait for the server to start
     end
 
     def test_authentication_failure
