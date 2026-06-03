@@ -1,7 +1,7 @@
 # fluent-plugin-parser-avro
 
 ![Testing on Ubuntu](https://github.com/fluent-plugins-nursery/fluent-plugin-parser-avro/actions/workflows/linux.yml/badge.svg)
-![Testing on Windows](https://github.com/fluent-plugins-nursery/fluent-plugin-parser-avro/actions/workflows/windows/badge.svg)
+![Testing on Windows](https://github.com/fluent-plugins-nursery/fluent-plugin-parser-avro/actions/workflows/windows.yml/badge.svg)
 
 [Fluentd](https://fluentd.org/) parser plugin to parse avro formatted data.
 
