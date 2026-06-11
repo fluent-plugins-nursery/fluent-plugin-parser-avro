@@ -424,7 +424,7 @@ class AvroParserTest < Test::Unit::TestCase
         ])
       d = create_driver(conf)
       datum = {"firstName" => "Aleen","lastName" => "Terry","birthDate" => 159202477258}
-      schema = Yajl.load(File.read(File.join(__dir__, "..", "data", "schema-persions-value-1.avsc")))
+      schema = JSON.parse(File.read(File.join(__dir__, "..", "data", "schema-persions-value-1.avsc")))
       encoded = encode_datum(datum, schema.fetch("schema"), true, 1)
       d.instance.parse(encoded) do |_time, record|
         assert_equal datum, record
@@ -442,7 +442,7 @@ class AvroParserTest < Test::Unit::TestCase
         ])
       d = create_driver(conf)
       datum = {"firstName" => "Aleen","lastName" => "Terry","birthDate" => 159202477258}
-      schema = Yajl.load(File.read(File.join(__dir__, "..", "data", "schema-persions-value-1.avsc")))
+      schema = JSON.parse(File.read(File.join(__dir__, "..", "data", "schema-persions-value-1.avsc")))
       encoded = encode_datum(datum, schema.fetch("schema"), true, 1)
       d.instance.parse(encoded) do |_time, record|
         assert_equal datum, record
@@ -506,7 +506,7 @@ class AvroParserTest < Test::Unit::TestCase
                                       }, [])
         ])
       datum = {"firstName" => "Aleen","lastName" => "Terry","birthDate" => 159202477258}
-      schema = Yajl.load(File.read(File.join(__dir__, "..", "data", "schema-persions-value-1.avsc")))
+      schema = JSON.parse(File.read(File.join(__dir__, "..", "data", "schema-persions-value-1.avsc")))
       encoded = encode_datum(datum, schema.fetch("schema"), true, 1)
       d = create_driver(conf)
       d.instance.parse(encoded) do |_time, record|
