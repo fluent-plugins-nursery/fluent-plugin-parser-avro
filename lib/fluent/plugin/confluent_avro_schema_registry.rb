@@ -34,7 +34,7 @@ module Fluent
         if schema_key.nil?
           response.body
         else
-          JSON.parse(response.body)[schema_key]
+          JSON.parse(response.body, allow_duplicate_key: true)[schema_key]
         end
       end
 
@@ -45,7 +45,7 @@ module Fluent
         if schema_key.nil?
           response.body
         else
-          JSON.parse(response.body)[schema_key]
+          JSON.parse(response.body, allow_duplicate_key: true)[schema_key]
         end
       end
 
